@@ -2,11 +2,7 @@
 
 (provide wrap-reader)
 
-(require racket/match
-         rackjure/threading
-         racket/port
-         racket/list
-         syntax/srcloc
+(require syntax/srcloc
          (for-meta -10 racket/base)
          (for-meta -9 racket/base)
          (for-meta -8 racket/base)
