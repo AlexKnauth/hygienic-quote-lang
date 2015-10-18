@@ -1,4 +1,4 @@
-hygienic-quote-lang
+hygienic-quote-lang [![Build Status](https://travis-ci.org/AlexKnauth/hygienic-quote-lang.png?branch=master)](https://travis-ci.org/AlexKnauth/hygienic-quote-lang)
 ===
 A meta-language that overrides the `'`, `` ` ``, etc. abbreviations for `quote`, `quasiquote`, etc, and
 provides hygienic versions instead.
