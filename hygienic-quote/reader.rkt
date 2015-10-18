@@ -37,7 +37,11 @@
 (define (wrap-reader p)
   (lambda args
     (define orig-readtable (current-readtable))
-    (define intro (make-syntax-introducer #t))
+    (define intro
+      (cond [(procedure-arity-includes? make-syntax-introducer 1)
+             (make-syntax-introducer #t)]
+            [else
+             (make-syntax-introducer)]))
     (parameterize ([current-readtable (make-hygienic-quote-readtable orig-readtable)]
                    [current-outer-scope intro])
       (define stx (apply p args))
