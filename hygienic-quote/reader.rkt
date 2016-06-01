@@ -2,7 +2,7 @@
 
 (provide wrap-reader)
 
-(require syntax/srcloc
+(require "private/make-quote-proc.rkt"
          (for-meta -10 racket/base)
          (for-meta -9 racket/base)
          (for-meta -8 racket/base)
@@ -29,23 +29,11 @@
 (module+ test
   (require rackunit racket/function))
 
+;; wrap-reader : [A ... -> Any] -> [A ... -> Any]
 (define (wrap-reader p)
   (extend-reader p make-hygienic-quote-readtable))
 
-(define (extend-reader p extend-readtable)
-  (lambda args
-    (define orig-readtable (current-readtable))
-    (define intro
-      (cond [(procedure-arity-includes? make-syntax-introducer 1)
-             (make-syntax-introducer #t)]
-            [else
-             (make-syntax-introducer)]))
-    (parameterize ([current-readtable (extend-readtable orig-readtable intro)])
-      (define stx (apply p args))
-      (if (syntax? stx)
-          (intro stx)
-          stx))))
-
+;; make-hygienic-quote-readtable : Readtable [Syntax -> Syntax] -> Readtable
 (define (make-hygienic-quote-readtable orig-rt outer-scope)
   (make-readtable orig-rt
     #\' 'terminating-macro (make-quote-proc #'quote outer-scope)
@@ -55,26 +43,4 @@
     #\` 'dispatch-macro (make-quote-proc #'quasisyntax outer-scope)
     #\, 'dispatch-macro (make-unquote-proc #\@ #'unsyntax-splicing #'unsyntax outer-scope)
     ))
-
-
-(define ((make-quote-proc quote-id outer-scope)
-         char in src ln col pos)
-  (define stx (read-syntax/recursive src in #f))
-  (parse quote-id stx outer-scope))
-
-(define ((make-unquote-proc splicing-char splicing-id unquote-id outer-scope)
-         char in src ln col pos)
-  (define c2 (read-char in))
-  (cond [(char=? c2 splicing-char)
-         (define stx (read-syntax/recursive src in #f))
-         (parse splicing-id stx outer-scope)]
-        [else
-         (define stx (read-syntax/recursive src in c2))
-         (parse unquote-id stx outer-scope)]))
-
-(define (parse quote-id stx outer-scope)
-  (define inner-scope (make-syntax-introducer))
-  (with-syntax ([quote-id quote-id]
-                [stx* (inner-scope (outer-scope stx))])
-    (outer-scope (inner-scope #'(quote-id stx*)))))
 
