@@ -29,12 +29,15 @@
 (module+ test
   (require rackunit racket/function))
 
+(define (wrap-reader p)
+  (extend-reader p make-hygienic-quote-readtable))
+
 (define current-outer-scope
   (make-parameter
    (lambda (stx)
-     (error 'current-outer-scope "must be used within the hygienic-quote reader"))))
+     (error 'current-outer-scope "must be used within a hygienic-quote reader"))))
 
-(define (wrap-reader p)
+(define (extend-reader p extend-readtable)
   (lambda args
     (define orig-readtable (current-readtable))
     (define intro
@@ -42,7 +45,7 @@
              (make-syntax-introducer #t)]
             [else
              (make-syntax-introducer)]))
-    (parameterize ([current-readtable (make-hygienic-quote-readtable orig-readtable)]
+    (parameterize ([current-readtable (extend-readtable orig-readtable)]
                    [current-outer-scope intro])
       (define stx (apply p args))
       (if (syntax? stx)
