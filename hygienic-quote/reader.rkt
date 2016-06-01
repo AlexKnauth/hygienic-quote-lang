@@ -32,11 +32,6 @@
 (define (wrap-reader p)
   (extend-reader p make-hygienic-quote-readtable))
 
-(define current-outer-scope
-  (make-parameter
-   (lambda (stx)
-     (error 'current-outer-scope "must be used within a hygienic-quote reader"))))
-
 (define (extend-reader p extend-readtable)
   (lambda args
     (define orig-readtable (current-readtable))
@@ -45,41 +40,39 @@
              (make-syntax-introducer #t)]
             [else
              (make-syntax-introducer)]))
-    (parameterize ([current-readtable (extend-readtable orig-readtable)]
-                   [current-outer-scope intro])
+    (parameterize ([current-readtable (extend-readtable orig-readtable intro)])
       (define stx (apply p args))
       (if (syntax? stx)
           (intro stx)
           stx))))
 
-(define (make-hygienic-quote-readtable [orig-rt (current-readtable)])
+(define (make-hygienic-quote-readtable orig-rt outer-scope)
   (make-readtable orig-rt
-    #\' 'terminating-macro (make-quote-proc #'quote)
-    #\` 'terminating-macro (make-quote-proc #'quasiquote)
-    #\, 'terminating-macro (make-unquote-proc #\@ #'unquote-splicing #'unquote)
-    #\' 'dispatch-macro (make-quote-proc #'syntax)
-    #\` 'dispatch-macro (make-quote-proc #'quasisyntax)
-    #\, 'dispatch-macro (make-unquote-proc #\@ #'unsyntax-splicing #'unsyntax)
+    #\' 'terminating-macro (make-quote-proc #'quote outer-scope)
+    #\` 'terminating-macro (make-quote-proc #'quasiquote outer-scope)
+    #\, 'terminating-macro (make-unquote-proc #\@ #'unquote-splicing #'unquote outer-scope)
+    #\' 'dispatch-macro (make-quote-proc #'syntax outer-scope)
+    #\` 'dispatch-macro (make-quote-proc #'quasisyntax outer-scope)
+    #\, 'dispatch-macro (make-unquote-proc #\@ #'unsyntax-splicing #'unsyntax outer-scope)
     ))
 
 
-(define ((make-quote-proc quote-id)
+(define ((make-quote-proc quote-id outer-scope)
          char in src ln col pos)
   (define stx (read-syntax/recursive src in #f))
-  (parse quote-id stx))
+  (parse quote-id stx outer-scope))
 
-(define ((make-unquote-proc splicing-char splicing-id unquote-id)
+(define ((make-unquote-proc splicing-char splicing-id unquote-id outer-scope)
          char in src ln col pos)
   (define c2 (read-char in))
   (cond [(char=? c2 splicing-char)
          (define stx (read-syntax/recursive src in #f))
-         (parse splicing-id stx)]
+         (parse splicing-id stx outer-scope)]
         [else
          (define stx (read-syntax/recursive src in c2))
-         (parse unquote-id stx)]))
+         (parse unquote-id stx outer-scope)]))
 
-(define (parse quote-id stx)
-  (define outer-scope (current-outer-scope))
+(define (parse quote-id stx outer-scope)
   (define inner-scope (make-syntax-introducer))
   (with-syntax ([quote-id quote-id]
                 [stx* (inner-scope (outer-scope stx))])
