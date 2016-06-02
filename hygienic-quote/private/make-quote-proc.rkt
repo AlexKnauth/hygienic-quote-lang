@@ -9,17 +9,19 @@
 (define (extend-reader proc extend-readtable)
   (lambda args
     (define orig-readtable (current-readtable))
-    (define intro
-      (cond [(procedure-arity-includes? make-syntax-introducer 1)
-             (make-syntax-introducer #t)]
-            [else
-             (make-syntax-introducer)]))
-    (parameterize ([current-readtable (extend-readtable orig-readtable intro)])
+    (define outer-scope (make-syntax-introducer/use-site))
+    (parameterize ([current-readtable (extend-readtable orig-readtable outer-scope)])
       (define stx (apply proc args))
       (if (syntax? stx)
-          (intro stx)
+          (outer-scope stx)
           stx))))
 
+;; make-syntax-introducer/use-site : -> [Syntax -> Syntax]
+(define (make-syntax-introducer/use-site)
+  (cond [(procedure-arity-includes? make-syntax-introducer 1)
+         (make-syntax-introducer #t)]
+        [else
+         (make-syntax-introducer)]))
 
 ;; make-quote-proc : Id [Syntax -> Syntax] -> Readtable-Proc
 (define ((make-quote-proc quote-id outer-scope)
