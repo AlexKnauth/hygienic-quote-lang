@@ -36,11 +36,15 @@
 ;; make-hygienic-quote-readtable : Readtable [Syntax -> Syntax] -> Readtable
 (define (make-hygienic-quote-readtable orig-rt outer-scope)
   (make-readtable orig-rt
-    #\' 'terminating-macro (make-quote-proc #'quote outer-scope)
-    #\` 'terminating-macro (make-quote-proc #'quasiquote outer-scope)
-    #\, 'terminating-macro (make-unquote-proc #\@ #'unquote-splicing #'unquote outer-scope)
-    #\' 'dispatch-macro (make-quote-proc #'syntax outer-scope)
-    #\` 'dispatch-macro (make-quote-proc #'quasisyntax outer-scope)
-    #\, 'dispatch-macro (make-unquote-proc #\@ #'unsyntax-splicing #'unsyntax outer-scope)
+    #\' 'terminating-macro (make-quote-proc (o #'quote) outer-scope)
+    #\` 'terminating-macro (make-quote-proc (o #'quasiquote) outer-scope)
+    #\, 'terminating-macro (make-unquote-proc #\@ (o #'unquote-splicing) (o #'unquote) outer-scope)
+    #\' 'dispatch-macro (make-quote-proc (o #'syntax) outer-scope)
+    #\` 'dispatch-macro (make-quote-proc (o #'quasisyntax) outer-scope)
+    #\, 'dispatch-macro (make-unquote-proc #\@ (o #'unsyntax-splicing) (o #'unsyntax) outer-scope)
     ))
+
+;; o : Syntax -> Syntax
+(define (o stx)
+  (syntax-property stx 'original-for-check-syntax #true))
 
