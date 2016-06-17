@@ -56,8 +56,16 @@
 
 ;; parse : Id Syntax [Syntax -> Syntax] -> Syntax
 (define (parse quote-id stx outer-scope)
+  (hygienic-app
+   #:outer-scope outer-scope
+   (lambda (stx*)
+     #`(#,quote-id #,stx*))
+   stx))
+
+;; hygienic-app : [Syntax -> Syntax] Syntax #:outer-scope [Syntax -> Syntax] -> Syntax
+;; Applies proc to stx, but with extra scopes added to the input and
+;; output to make it hygienic.
+(define (hygienic-app proc stx #:outer-scope outer-scope)
   (define inner-scope (make-syntax-introducer))
-  (with-syntax ([quote-id quote-id]
-                [stx* (inner-scope (outer-scope stx))])
-    (outer-scope (inner-scope #'(quote-id stx*)))))
+  (outer-scope (inner-scope (proc (inner-scope (outer-scope stx))))))
 
