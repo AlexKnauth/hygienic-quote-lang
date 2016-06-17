@@ -3,6 +3,7 @@
 (provide wrap-reader)
 
 (require "private/make-quote-proc.rkt"
+         hygienic-reader-extension/extend-reader
          (for-meta -10 racket/base)
          (for-meta -9 racket/base)
          (for-meta -8 racket/base)
@@ -33,8 +34,8 @@
 (define (wrap-reader p)
   (extend-reader p make-hygienic-quote-readtable))
 
-;; make-hygienic-quote-readtable : Readtable [Syntax -> Syntax] -> Readtable
-(define (make-hygienic-quote-readtable orig-rt outer-scope)
+;; make-hygienic-quote-readtable : Readtable #:outer-scope [Syntax -> Syntax] -> Readtable
+(define (make-hygienic-quote-readtable orig-rt #:outer-scope outer-scope)
   (make-readtable orig-rt
     #\' 'terminating-macro (make-quote-proc (o #'quote) outer-scope)
     #\` 'terminating-macro (make-quote-proc (o #'quasiquote) outer-scope)

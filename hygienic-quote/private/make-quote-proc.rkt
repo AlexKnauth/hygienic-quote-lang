@@ -1,29 +1,10 @@
 #lang racket/base
 
-(provide extend-reader
-         make-quote-proc
+(provide make-quote-proc
          make-unquote-proc
          )
 
-(require syntax/srcloc)
-
-;; extend-reader : (A ... -> Any) (Readtable (Syntax -> Syntax) -> Readtable) -> (A ... -> Any)
-(define (extend-reader proc extend-readtable)
-  (lambda args
-    (define orig-readtable (current-readtable))
-    (define outer-scope (make-syntax-introducer/use-site))
-    (parameterize ([current-readtable (extend-readtable orig-readtable outer-scope)])
-      (define stx (apply proc args))
-      (if (syntax? stx)
-          (outer-scope stx)
-          stx))))
-
-;; make-syntax-introducer/use-site : -> [Syntax -> Syntax]
-(define (make-syntax-introducer/use-site)
-  (cond [(procedure-arity-includes? make-syntax-introducer 1)
-         (make-syntax-introducer #t)]
-        [else
-         (make-syntax-introducer)]))
+(require syntax/srcloc hygienic-reader-extension/extend-reader)
 
 ;; make-quote-proc : Id [Syntax -> Syntax] -> Readtable-Proc
 (define ((make-quote-proc quote-id outer-scope)
@@ -61,11 +42,4 @@
    (lambda (stx*)
      #`(#,quote-id #,stx*))
    stx))
-
-;; hygienic-app : [Syntax -> Syntax] Syntax #:outer-scope [Syntax -> Syntax] -> Syntax
-;; Applies proc to stx, but with extra scopes added to the input and
-;; output to make it hygienic.
-(define (hygienic-app proc stx #:outer-scope outer-scope)
-  (define inner-scope (make-syntax-introducer))
-  (outer-scope (inner-scope (proc (inner-scope (outer-scope stx))))))
 
