@@ -4,6 +4,7 @@
 
 (define deps
   '("base"
+    "hygienic-reader-extension"
     ))
 
 (define build-deps
