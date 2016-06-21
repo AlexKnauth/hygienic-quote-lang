@@ -4,25 +4,15 @@
                      [hygienic-quote-read-syntax read-syntax]
                      [hygienic-quote-get-info get-info]))
 
-(require syntax/module-reader
+(require (only-in syntax/module-reader make-meta-reader)
+         (only-in lang-extension/meta-reader-util reader-module-paths)
          (only-in "../reader.rkt" wrap-reader))
 
 (define-values (hygienic-quote-read hygienic-quote-read-syntax hygienic-quote-get-info)
   (make-meta-reader
    'hygienic-quote
    "language path"
-   (lambda (bstr)
-     (let* ([str (bytes->string/latin-1 bstr)]
-            [sym (string->symbol str)])
-       (and (module-path? sym)
-            (vector
-             ;; try submod first:
-             `(submod ,sym reader)
-             ;; fall back to /lang/reader:
-             (string->symbol (string-append str "/lang/reader"))))))
+   reader-module-paths
    wrap-reader ; for read
    wrap-reader ; for read-syntax
-   (lambda (proc)
-     (lambda (key defval)
-       (define (fallback) (if proc (proc key defval) defval))
-       (fallback)))))
+   (λ (get-info) get-info)))
