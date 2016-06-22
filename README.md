@@ -1,6 +1,6 @@
 hygienic-quote-lang [![Build Status](https://travis-ci.org/AlexKnauth/hygienic-quote-lang.png?branch=master)](https://travis-ci.org/AlexKnauth/hygienic-quote-lang)
 ===
-A meta-language that overrides the `'`, `` ` ``, etc. abbreviations for `quote`, `quasiquote`, etc, and
+A lang-extension that overrides the `'`, `` ` ``, etc. abbreviations for `quote`, `quasiquote`, etc, and
 provides hygienic versions instead.
 
 documentation: http://pkg-build.racket-lang.org/doc/hygienic-quote/index.html

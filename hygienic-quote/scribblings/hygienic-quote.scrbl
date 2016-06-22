@@ -7,7 +7,7 @@
 source code: @url{https://github.com/AlexKnauth/hygienic-quote-lang}
 
 @defmodule[hygienic-quote #:lang]{
-A meta-language that overrides the @litchar{'}, @litchar{`}, etc. abbreviations
+A lang-extension that overrides the @litchar{'}, @litchar{`}, etc. abbreviations
 for @racket[quote], @racket[quasiquote], etc, and provides hygienic versions
 instead.
 
